@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>InfiniWall - Indefinitely panning layer in Javascript</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+	<script src="../../src/infiniwall.js"></script>
+</head>
+
+<style>
+* {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+body, ul, li {
+	padding: 0;
+	margin: 0;
+	border: 0;
+}
+
+#infiniwall {
+	margin: 140px auto 0 auto;
+	width: 510px;
+	height: 420px;
+	background: #ddd;
+	overflow: hidden;
+	position: relative;
+}
+
+ul {
+	position: absolute;
+	top: -140px;
+	left: -170px;
+	width: 850px;
+	height: 700px;
+	list-style: none;
+	
+	-webkit-transform: translate(0px, 0px) translateZ(0);
+	-moz-transform: translate(0px, 0px) translateZ(0);
+	-ms-transform: translate(0px, 0px) translateZ(0);
+	-o-transform: translate(0px, 0px) translateZ(0);
+	transform: translate(0px, 0px) translateZ(0);
+}
+
+li {
+	display: block;
+	position: relative;
+	float: left;
+	width: 170px;
+	height: 140px;
+	-webkit-transform: translate(0px, 0px) translateZ(0);
+	-moz-transform: translate(0px, 0px) translateZ(0);
+	-ms-transform: translate(0px, 0px) translateZ(0);
+	-o-transform: translate(0px, 0px) translateZ(0);
+	transform: translate(0px, 0px) translateZ(0);
+	display: block;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	border-right: 1px solid #000;
+	border-bottom: 1px solid #000;
+	overflow: hidden;
+}
+
+li img {
+	position: absolute;
+}
+
+.spinner {
+	display: block;
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	left: -9999px;
+	top: 50%;
+	margin-top: -35px;
+	margin-left: -20px;
+	background: url(images/loading.png) no-repeat;
+}
+
+.loading .spinner {
+	left: 50%;
+	-webkit-animation: spin 2s linear infinite;
+	-moz-animation: spin 2s linear infinite;
+	-o-animation: spin 2s linear infinite;
+	animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		-webkit-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+		-ms-transform: rotate(0deg);
+		-o-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	to {
+		-webkit-transform: rotate(360deg);
+		-moz-transform: rotate(360deg);
+		-ms-transform: rotate(360deg);
+		-o-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+@-moz-keyframes spin {
+	from {
+		-webkit-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+		-ms-transform: rotate(0deg);
+		-o-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	to {
+		-webkit-transform: rotate(360deg);
+		-moz-transform: rotate(360deg);
+		-ms-transform: rotate(360deg);
+		-o-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+@-webkit-keyframes spin {
+	from {
+		-webkit-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+		-ms-transform: rotate(0deg);
+		-o-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	to {
+		-webkit-transform: rotate(360deg);
+		-moz-transform: rotate(360deg);
+		-ms-transform: rotate(360deg);
+		-o-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+@-o-keyframes spin {
+	from {
+		-webkit-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+		-ms-transform: rotate(0deg);
+		-o-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	to {
+		-webkit-transform: rotate(360deg);
+		-moz-transform: rotate(360deg);
+		-ms-transform: rotate(360deg);
+		-o-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+.loading img {
+	left: -9999px;
+}
+
+li span {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	background: rgba(0,0,0,0.6);
+	color: #fff;
+	padding: 5px;
+	font-size: 19px;
+}
+
+</style>
+<body>
+	<div id="infiniwall">
+		<ul>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+		</ul>
+	</div>
+
+<script>
+document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+var iw = new InfiniWall('#infiniwall');
+</script>
+
+</body>
+</html>
