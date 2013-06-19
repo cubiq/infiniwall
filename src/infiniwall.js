@@ -182,30 +182,33 @@ InfiniWall.prototype = {
 
 	_rearrangeCells: function () {
 
-		// position within the window from 0-1
-		var screenPos = new Vec2(
+		// how many screens we've travelled from the start
+		// (- to the right, + to the left)
+		var screens = new Vec2(
 				Math.ceil(this.x / this.wallWidth),
 				Math.ceil(this.y / this.wallHeight)
 			),
 
-			// virtualScreenX = Math.abs(screenPos.x - Math.ceil(screenPos.x / 2) * 2),
-			// virtualScreenY = Math.abs(screenPos.y - Math.ceil(screenPos.y / 2) * 2),
+			// virtualScreenX = Math.abs(screens.x - Math.ceil(screens.x / 2) * 2),
+			// virtualScreenY = Math.abs(screens.y - Math.ceil(screens.y / 2) * 2),
 
-			// position relative to the number of cells within the window
-			// eg 2.5 cells in from the left of the edge of the window
+			// how many cells we have travelled from the start
 			pos = new Vec2(
 				Math.ceil(this.x / this.cellWidth) * this.cellWidth / this.cellWidth,   // x
 				Math.ceil(this.y / this.cellHeight) * this.cellHeight / this.cellHeight // y
 			),
 
-			// ?
-			x2 = Math.abs(pos.x - Math.ceil(pos.x / this.gridWidth) * this.gridWidth),
-			y2 = Math.abs(pos.y - Math.ceil(pos.y / this.gridHeight) * this.gridHeight),
+			// how many cells we have travelled within the current screen
+			localCellOffset = new Vec2(
+				Math.abs(pos.x - Math.ceil(pos.x / this.gridWidth) * this.gridWidth),
+				Math.abs(pos.y - Math.ceil(pos.y / this.gridHeight) * this.gridHeight)
+			),
 
-			// position relative to the edge of the virtual grid to detect
-			// if we need to load more
-			phaseX = Math.abs((pos.x) - Math.ceil((pos.x) / this.virtualGridWidth) * this.virtualGridWidth),
-			phaseY = Math.abs((pos.y) - Math.ceil((pos.y) / this.virtualGridHeight) * this.virtualGridHeight),
+			// how many cells we have travelled within the current virtual grid
+			virtualCellOffset = new Vec2(
+				Math.abs((pos.x) - Math.ceil((pos.x) / this.virtualGridWidth) * this.virtualGridWidth),
+				Math.abs((pos.y) - Math.ceil((pos.y) / this.virtualGridHeight) * this.virtualGridHeight)
+			),
 
 			i, l,
 			x, y,
@@ -218,18 +221,21 @@ InfiniWall.prototype = {
 		this.cell.copy(pos);
 		this.prevDir.copy(this.direction);
 
-		// update the x positions of the cells
 		var cellOffset = new Vec2(
-			this.direction.x < 0 ? this.wallWidth * -screenPos.x + this.wallWidth : -(this.wallWidth * screenPos.x),
-			this.direction.y < 0 ? this.wallHeight * -screenPos.y + this.wallHeight : -(this.wallHeight * screenPos.y)
+			this.direction.x < 0 ? this.wallWidth * -screens.x + this.wallWidth : -(this.wallWidth * screens.x),
+			this.direction.y < 0 ? this.wallHeight * -screens.y + this.wallHeight : -(this.wallHeight * screens.y)
 		);
+
+		// update the x positions of the cells
 		for ( i = 0; i < this.gridWidth; i++ ) {
+			// if we're going left
 			if ( this.direction.x < 0 ) {
-				for ( l = 0; l < x2 + 1; l++ ) {
+				// loop through cells between
+				for ( l = 0; l < localCellOffset.x + 1; l++ ) {
 					this.cells[l][i].x = cellOffset.x;
 				}
 			} else {
-				for ( l = this.gridWidth - 1; l > x2 - 1; l-- ) {
+				for ( l = this.gridWidth - 1; l > localCellOffset.x - 1; l-- ) {
 					this.cells[l][i].x = cellOffset.x;
 				}
 			}
@@ -238,11 +244,11 @@ InfiniWall.prototype = {
 		// update the y positions of the cells
 		for ( i = 0; i < this.gridHeight; i++ ) {
 			if ( this.direction.y < 0 ) {
-				for ( l = 0; l < y2 + 1; l++ ) {
+				for ( l = 0; l < localCellOffset.y + 1; l++ ) {
 					this.cells[i][l].y = cellOffset.y;
 				}
 			} else {
-				for ( l = this.gridHeight - 1; l > y2 - 1; l-- ) {
+				for ( l = this.gridHeight - 1; l > localCellOffset.y - 1; l-- ) {
 					this.cells[i][l].y = cellOffset.y;
 				}
 			}
@@ -250,17 +256,17 @@ InfiniWall.prototype = {
 
 		for ( i = 0; i < this.gridWidth; i++ ) {
 
-			if ( phaseX <= this.gridWidth ) {
-				x = phaseX > i ? this.gridWidth + i : i;
+			if ( virtualCellOffset.x <= this.gridWidth ) {
+				x = virtualCellOffset.x > i ? this.gridWidth + i : i;
 			} else {
-				x = phaseX - this.gridWidth > i ? i : this.gridWidth + i;
+				x = virtualCellOffset.x - this.gridWidth > i ? i : this.gridWidth + i;
 			}
 
 			for ( l = 0; l < this.gridHeight; l++ ) {
-				if ( phaseY <= this.gridHeight ) {
-					y = phaseY > l ? this.gridHeight + l : l;
+				if ( virtualCellOffset.y <= this.gridHeight ) {
+					y = virtualCellOffset.y > l ? this.gridHeight + l : l;
 				} else {
-					y = phaseY - this.gridHeight > l ? l : this.gridHeight + l;
+					y = virtualCellOffset.y - this.gridHeight > l ? l : this.gridHeight + l;
 				}
 
 				slot = x + y * this.virtualGridWidth;
