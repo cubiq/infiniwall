@@ -31,13 +31,13 @@ var dummyStyle = document.createElement('i').style,
 			t,
 			i = 0,
 			l = vendors.length;
-		
+
 		for ( ; i < l; i++ ) {
 			t = vendors[i] + 'ransform';
 			if ( t in dummyStyle )
 				return vendors[i].substr(0, vendors[i].length - 1);
 		}
-		
+
 		return false;
 	})(),
 	cssVendor = vendor ? '-' + vendor.toLowerCase() + '-' : '',
@@ -75,7 +75,7 @@ var dummyStyle = document.createElement('i').style,
 
 		return transitionEnd[vendor];
 	})(),
-	
+
 	// Helpers
 	requestFrame =	window.requestAnimationFrame ||
 					window.webkitRequestAnimationFrame ||
@@ -91,7 +91,7 @@ function InfiniWall (el, options) {
 		pos,
 		i,
 		tag;
-	
+
 	this.container = typeof el == 'string' ? document.querySelector(el) : el;
 	this.wall = this.container.children[0];
 
@@ -103,9 +103,12 @@ function InfiniWall (el, options) {
 	pos = this._getPosition();
 	this.x = pos.x;
 	this.y = pos.y;
-	
+
+	// how many cells are kept in the dom at any time
 	this.gridWidth = 5;
 	this.gridHeight = 5;
+
+	// the grid size to prepare for new cells
 	this.virtualGridWidth = 10;
 	this.virtualGridHeight = 10;
 
@@ -187,49 +190,75 @@ InfiniWall.prototype = {
 	},
 
 	_rearrangeCells: function () {
-		var screenX = Math.ceil(this.x / this.wallWidth),
-			screenY = Math.ceil(this.y / this.wallHeight),
-			virtualScreenX = Math.abs(screenX - Math.ceil(screenX / 2) * 2),
-			virtualScreenY = Math.abs(screenY - Math.ceil(screenY / 2) * 2),
-			posX = Math.ceil(this.x / this.cellWidth) * this.cellWidth / this.cellWidth,
-			posY = Math.ceil(this.y / this.cellHeight) * this.cellHeight / this.cellHeight,
-			x2 = Math.abs(posY - Math.ceil(posY / this.gridHeight) * this.gridHeight),
-			y2 = Math.abs(posX - Math.ceil(posX / this.gridWidth) * this.gridWidth),
-			phaseX = Math.abs((posX) - Math.ceil((posX) / this.virtualGridWidth) * this.virtualGridWidth),
-			phaseY = Math.abs((posY) - Math.ceil((posY) / this.virtualGridHeight) * this.virtualGridHeight),
+
+		// position within the window from 0-1
+		var screenPos = new Vec2(
+				Math.ceil(this.x / this.wallWidth),
+				Math.ceil(this.y / this.wallHeight)
+			),
+
+			// virtualScreenX = Math.abs(screenPos.x - Math.ceil(screenPos.x / 2) * 2),
+			// virtualScreenY = Math.abs(screenPos.y - Math.ceil(screenPos.y / 2) * 2),
+
+			// position relative to the number of cells within the window
+			// eg 2.5 cells in from the left of the edge of the window
+			pos = new Vec2(
+				Math.ceil(this.x / this.cellWidth) * this.cellWidth / this.cellWidth,   // x
+				Math.ceil(this.y / this.cellHeight) * this.cellHeight / this.cellHeight // y
+			),
+
+			// ?
+			x2 = Math.abs(pos.y - Math.ceil(pos.y / this.gridHeight) * this.gridHeight),
+			y2 = Math.abs(pos.x - Math.ceil(pos.x / this.gridWidth) * this.gridWidth),
+
+			// position relative to the edge of the virtual grid to detect
+			// if we need to load more
+			phaseX = Math.abs((pos.x) - Math.ceil((pos.x) / this.virtualGridWidth) * this.virtualGridWidth),
+			phaseY = Math.abs((pos.y) - Math.ceil((pos.y) / this.virtualGridHeight) * this.virtualGridHeight),
+
 			i, l,
 			x, y,
 			slot,
 			cells = [],
-			that = this;
+			that = this
+		;
 
-		if ( this.prevDirX === this.dirX && this.prevDirY === this.dirY && this.cellX === posX && this.cellY === posY ) return;
+		if (
+			this.prevDirX === this.direction.x
+			&& this.prevDirY === this.direction.y
+			&& this.cell.x === pos.x
+			&& this.cellY === pos.y
+		){
+			return;
+		}
 
-		this.cellX = posX;
-		this.cellY = posY;
-		this.prevDirX = this.dirX;
-		this.prevDirY = this.dirY;
+		this.cell.x = pos.x;
+		this.cellY = pos.y;
+		this.prevDirX = this.direction.x;
+		this.prevDirY = this.direction.y;
 
+		// update the x positions of the cells
 		for ( i = 0; i < this.gridWidth; i++ ) {
-			if ( this.dirX < 0 ) {
+			if ( this.direction.x < 0 ) {
 				for ( l = 0; l < y2 + 1; l++ ) {
-					this.cells[l][i].x = this.wallWidth * -screenX + this.wallWidth;
+					this.cells[l][i].x = this.wallWidth * -screenPos.x + this.wallWidth;
 				}
 			} else {
 				for ( l = this.gridWidth - 1; l > y2 - 1; l-- ) {
-					this.cells[l][i].x = -(this.wallWidth * screenX);
+					this.cells[l][i].x = -(this.wallWidth * screenPos.x);
 				}
 			}
 		}
 
+		// update the y positions of the cells
 		for ( i = 0; i < this.gridHeight; i++ ) {
-			if ( this.dirY < 0 ) {
+			if ( this.direction.y < 0 ) {
 				for ( l = 0; l < x2 + 1; l++ ) {
-					this.cells[i][l].y = this.wallHeight * -screenY + this.wallHeight;
+					this.cells[i][l].y = this.wallHeight * -screenPos.y + this.wallHeight;
 				}
 			} else {
 				for ( l = this.gridHeight - 1; l > x2 - 1; l-- ) {
-					this.cells[i][l].y = -(this.wallHeight * screenY);
+					this.cells[i][l].y = -(this.wallHeight * screenPos.y);
 				}
 			}
 		}
@@ -249,7 +278,7 @@ InfiniWall.prototype = {
 				}
 
 				slot = x + y * this.virtualGridWidth;
-				
+
 				if ( slot != this.cells[i][l].slot ) {
 					this.cells[i][l].slot = slot;
 					this.cells[i][l].el.className = 'loading';
@@ -284,13 +313,13 @@ InfiniWall.prototype = {
 		var matrix = window.getComputedStyle(this.wall, null)[transform].replace(/[^0-9\-.,]/g, '').split(','),
 			x = +matrix[4],
 			y = +matrix[5];
-		
+
 		return { x: x, y: y };
 	},
 
 	_setDuration: function (d) {
 		d = d || 0;
-		
+
 		this.wall.style[transitionDuration] = d + 'ms';
 	},
 
@@ -317,8 +346,7 @@ InfiniWall.prototype = {
 		this.initiated = true;
 		this._setDuration(0);
 
-		this.dirX = 0;
-		this.dirY = 0;
+		this.direction = new Vec2(0,0),
 		this.distX = 0;
 		this.distY = 0;
 		this.originX = this.x;
@@ -326,18 +354,22 @@ InfiniWall.prototype = {
 		this.startX = point.pageX;
 		this.startY = point.pageY;
 		this.startTime = e.timeStamp || Date.now();
-		
+
 		this._bind(moveEv, document);
 		this._bind(endEv, document);
 		this._bind(cancelEv, document);
 	},
-	
+
 	_move: function (e) {
 		var point = hasTouch ? e.touches[0] : e,
-			deltaX = point.pageX - this.startX,
-			deltaY = point.pageY - this.startY,
-			newX = this.x + deltaX,
-			newY = this.y + deltaY,
+			delta = new Vec2(
+				point.pageX - this.startX,
+				point.pageY - this.startY
+			),
+			newPos = new Vec2(
+				this.x + delta.x,
+				this.y + delta.y
+			),
 			timestamp = e.timeStamp || Date.now(),
 			that = this;
 
@@ -346,11 +378,11 @@ InfiniWall.prototype = {
 		clearTimeout(this._loadTimeout);
 		this._loadTimeout = null;
 
-		this.distX += Math.abs(deltaX);
-		this.distY += Math.abs(deltaY);
+		this.distX += Math.abs(delta.x);
+		this.distY += Math.abs(delta.y);
 
-		this.dirX = deltaX < 0 ? -1 : deltaX > 0 ? 1 : 0;
-		this.dirY = deltaY < 0 ? -1 : deltaY > 0 ? 1 : 0;
+		this.direction.x = delta.x < 0 ? -1 : delta.x > 0 ? 1 : 0;
+		this.direction.y = delta.y < 0 ? -1 : delta.y > 0 ? 1 : 0;
 
 		// 10 px actuation point
 		if ( this.distX < 10 && this.distY < 10 ) {
@@ -360,7 +392,7 @@ InfiniWall.prototype = {
 		this.startX = point.pageX;
 		this.startY = point.pageY;
 
-		this._setPosition(newX, newY);
+		this._setPosition(newPos.x, newPos.y);
 
 		this._rearrangeCells();
 
@@ -454,6 +486,12 @@ function prefixStyle (style) {
 function imgLoaded () {
 	var el = this.parentNode;
 	el.className = '';
+}
+
+// simple 2 dimensional vector
+function Vec2(x,y) {
+    this.x = x;
+    this.y = y;
 }
 
 
