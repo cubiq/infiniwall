@@ -86,11 +86,11 @@ var dummyStyle = document.createElement('i').style,
 	translateZ = has3d ? ' translateZ(0)' : '';
 
 function InfiniWall (el, options) {
-	var x = 0,
+	var that = this,
+		x = 0,
 		y = 0,
 		pos,
-		i,
-		tag;
+		i;
 
 	this.container = typeof el == 'string' ? document.querySelector(el) : el;
 	this.wall = this.container.children[0];
@@ -99,6 +99,9 @@ function InfiniWall (el, options) {
 	this.wallHeight = this.wall.offsetHeight;
 	this.cellWidth = this.wall.children[0].offsetWidth;
 	this.cellHeight = this.wall.children[0].offsetHeight;
+
+	this.cell = new Vec2();
+	this.prevDir = new Vec2();
 
 	pos = this._getPosition();
 	this.x = pos.x;
@@ -113,34 +116,22 @@ function InfiniWall (el, options) {
 	this.virtualGridHeight = 10;
 
 	this.cells = [];
+	this.Cell = function(x, y) {
+		this.el = that.wall.children[y * that.gridWidth + x];
+		this.slot = y * that.virtualGridWidth + x;
+		this.x = 0;
+		this.y = 0;
+		this.prevSlot = this.slot;
+		this.el.className = 'loading';
+	};
+	this.Cell.prototype = InfiniWall.Cell.prototype;
+
 	for ( ; x < this.gridWidth; x++ ) {
 		this.cells[x] = [];
 
 		for ( y = 0; y < this.gridHeight; y++ ) {
-			this.cells[x][y] = {
-				el: this.wall.children[y * this.gridWidth + x],
-				slot: y * this.virtualGridWidth + x,
-				x: 0,
-				y: 0
-			};
-			this.cells[x][y].prevSlot = this.cells[x][y].slot;
-			this.cells[x][y].el.className = 'loading';
-
-			tag = document.createElement('img');
-			tag.width = 170;
-			tag.height = 140;
-			tag.onload = imgLoaded;
-			tag.onerror = imgLoaded;
-			tag.src = 'images/img' + this.cells[x][y].slot + '.jpg';
-			this.cells[x][y].el.appendChild(tag);
-
-			tag = document.createElement('span');
-			tag.innerHTML = 'Image No. ' + this.cells[x][y].slot;
-			this.cells[x][y].el.appendChild(tag);
-
-			tag = document.createElement('span');
-			tag.className = 'spinner';
-			this.cells[x][y].el.appendChild(tag);
+			this.cells[x][y] = new this.Cell(x,y);
+			this.cells[x][y].render();
 		}
 	}
 
@@ -208,8 +199,8 @@ InfiniWall.prototype = {
 			),
 
 			// ?
-			x2 = Math.abs(pos.y - Math.ceil(pos.y / this.gridHeight) * this.gridHeight),
-			y2 = Math.abs(pos.x - Math.ceil(pos.x / this.gridWidth) * this.gridWidth),
+			x2 = Math.abs(pos.x - Math.ceil(pos.x / this.gridWidth) * this.gridWidth),
+			y2 = Math.abs(pos.y - Math.ceil(pos.y / this.gridHeight) * this.gridHeight),
 
 			// position relative to the edge of the virtual grid to detect
 			// if we need to load more
@@ -223,28 +214,18 @@ InfiniWall.prototype = {
 			that = this
 		;
 
-		if (
-			this.prevDirX === this.direction.x
-			&& this.prevDirY === this.direction.y
-			&& this.cell.x === pos.x
-			&& this.cellY === pos.y
-		){
-			return;
-		}
-
-		this.cell.x = pos.x;
-		this.cellY = pos.y;
-		this.prevDirX = this.direction.x;
-		this.prevDirY = this.direction.y;
+		if (this.prevDir.equals(this.direction) && this.cell.equals(pos)) return;
+		this.cell.copy(pos);
+		this.prevDir.copy(this.direction);
 
 		// update the x positions of the cells
 		for ( i = 0; i < this.gridWidth; i++ ) {
 			if ( this.direction.x < 0 ) {
-				for ( l = 0; l < y2 + 1; l++ ) {
+				for ( l = 0; l < x2 + 1; l++ ) {
 					this.cells[l][i].x = this.wallWidth * -screenPos.x + this.wallWidth;
 				}
 			} else {
-				for ( l = this.gridWidth - 1; l > y2 - 1; l-- ) {
+				for ( l = this.gridWidth - 1; l > x2 - 1; l-- ) {
 					this.cells[l][i].x = -(this.wallWidth * screenPos.x);
 				}
 			}
@@ -253,17 +234,18 @@ InfiniWall.prototype = {
 		// update the y positions of the cells
 		for ( i = 0; i < this.gridHeight; i++ ) {
 			if ( this.direction.y < 0 ) {
-				for ( l = 0; l < x2 + 1; l++ ) {
+				for ( l = 0; l < y2 + 1; l++ ) {
 					this.cells[i][l].y = this.wallHeight * -screenPos.y + this.wallHeight;
 				}
 			} else {
-				for ( l = this.gridHeight - 1; l > x2 - 1; l-- ) {
+				for ( l = this.gridHeight - 1; l > y2 - 1; l-- ) {
 					this.cells[i][l].y = -(this.wallHeight * screenPos.y);
 				}
 			}
 		}
 
 		for ( i = 0; i < this.gridWidth; i++ ) {
+
 			if ( phaseX <= this.gridWidth ) {
 				x = phaseX > i ? this.gridWidth + i : i;
 			} else {
@@ -488,10 +470,43 @@ function imgLoaded () {
 	el.className = '';
 }
 
+// ------------ OBJECTS ----------------
+InfiniWall.Cell = function(){};
+InfiniWall.Cell.prototype = {
+	render: function(){
+		var tag;
+
+		tag = document.createElement('img');
+		tag.width = 170;
+		tag.height = 140;
+		tag.onload = imgLoaded;
+		tag.onerror = imgLoaded;
+		tag.src = 'images/img' + this.slot + '.jpg';
+		this.el.appendChild(tag);
+
+		tag = document.createElement('span');
+		tag.innerHTML = 'Image No. ' + this.slot;
+		this.el.appendChild(tag);
+
+		tag = document.createElement('span');
+		tag.className = 'spinner';
+		this.el.appendChild(tag);
+	}
+};
+
 // simple 2 dimensional vector
 function Vec2(x,y) {
     this.x = x;
     this.y = y;
+}
+Vec2.prototype = {
+	copy: function(v){
+		this.x = v.x;
+		this.y = v.y;
+	},
+	equals: function(v){
+		return this.x === v.x && this.y === v.y;
+	}
 }
 
 
