@@ -219,14 +219,18 @@ InfiniWall.prototype = {
 		this.prevDir.copy(this.direction);
 
 		// update the x positions of the cells
+		var cellOffset = new Vec2(
+			this.direction.x < 0 ? this.wallWidth * -screenPos.x + this.wallWidth : -(this.wallWidth * screenPos.x),
+			this.direction.y < 0 ? this.wallHeight * -screenPos.y + this.wallHeight : -(this.wallHeight * screenPos.y)
+		);
 		for ( i = 0; i < this.gridWidth; i++ ) {
 			if ( this.direction.x < 0 ) {
 				for ( l = 0; l < x2 + 1; l++ ) {
-					this.cells[l][i].x = this.wallWidth * -screenPos.x + this.wallWidth;
+					this.cells[l][i].x = cellOffset.x;
 				}
 			} else {
 				for ( l = this.gridWidth - 1; l > x2 - 1; l-- ) {
-					this.cells[l][i].x = -(this.wallWidth * screenPos.x);
+					this.cells[l][i].x = cellOffset.x;
 				}
 			}
 		}
@@ -235,11 +239,11 @@ InfiniWall.prototype = {
 		for ( i = 0; i < this.gridHeight; i++ ) {
 			if ( this.direction.y < 0 ) {
 				for ( l = 0; l < y2 + 1; l++ ) {
-					this.cells[i][l].y = this.wallHeight * -screenPos.y + this.wallHeight;
+					this.cells[i][l].y = cellOffset.y;
 				}
 			} else {
 				for ( l = this.gridHeight - 1; l > y2 - 1; l-- ) {
-					this.cells[i][l].y = -(this.wallHeight * screenPos.y);
+					this.cells[i][l].y = cellOffset.y;
 				}
 			}
 		}
